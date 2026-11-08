@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EDH Tournament Manager</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1c18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EDH Manager">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1ea;--surf:#fff;--ink:#14201c;--mut:#5d6b64;--line:#d3dacf;--acc:#1f6b57;--accink:#fff;--gold:#b97b00;--win:#d9f0e3;--draw:#fbefc8;--loss:#f3dede;--r:14px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1c18;--surf:#173029;--ink:#eef0e6;--mut:#9db0a6;--line:#2a4a40;--acc:#e3b341;--accink:#1a1405;--gold:#e3b341;--win:#1d4a39;--draw:#4a4119;--loss:#4a2626}}
+:root[data-theme="dark"]{--bg:#0f1c18;--surf:#173029;--ink:#eef0e6;--mut:#9db0a6;--line:#2a4a40;--acc:#e3b341;--accink:#1a1405;--gold:#e3b341;--win:#1d4a39;--draw:#4a4119;--loss:#4a2626}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Bricolage Grotesque",system-ui,sans-serif;min-height:100%;padding-bottom:84px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header{padding:16px 16px 8px;max-width:640px;margin:0 auto}
+h1{font-size:26px;font-weight:800;margin:0;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin-top:2px}
+main{max-width:640px;margin:0 auto;padding:8px 16px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:0 0 12px}
+.card h3{margin:0 0 8px;font-size:17px;font-weight:600}
+.row{display:flex;gap:8px;align-items:center}
+.row.sp{justify-content:space-between}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input:focus-visible,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:10px;padding:10px 14px;min-height:44px}
+button.p{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.sm{padding:6px 10px;min-height:36px;font-size:14px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surf);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;border:0;border-radius:0;background:none;min-height:56px;font-size:14px;color:var(--mut)}
+nav button.on{color:var(--acc);font-weight:800;box-shadow:inset 0 3px 0 var(--acc)}
+.pl{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}
+.pl.dr .nm{text-decoration:line-through;color:var(--mut)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px}
+.chips button{white-space:nowrap;min-height:38px;padding:6px 14px;border-radius:20px}
+.chips button.on{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.seat{width:100%;display:flex;justify-content:space-between;text-align:left;margin:0 0 6px}
+.seat.win{background:var(--win);border-color:var(--acc);font-weight:600}
+.seat.draw{background:var(--draw)}
+.seat.loss{background:var(--loss);color:var(--mut)}
+.tag{font-size:12px;border-radius:8px;padding:2px 8px;background:var(--bg);color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:8px 4px;text-align:right;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--mut);font-weight:600;border-top:0}
+th:nth-child(2),td:nth-child(2){text-align:left;width:100%}
+td:first-child{text-align:left;color:var(--mut)}
+tr.dr td{color:var(--mut)}
+.champ{background:var(--acc);color:var(--accink);border-radius:var(--r);padding:14px;margin-bottom:12px;font-weight:800;font-size:20px}
+.note{font-size:13px;color:var(--mut)}
+label{font-size:14px;color:var(--mut);display:block;margin:0 0 4px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.warn{color:var(--gold);font-size:14px;margin:6px 0 0}
+</style>
+</head>
+<body>
+<header><h1 id="ttl">EDH Tournament Manager</h1><div class="sub" id="sub"></div></header>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script>
+const KEY="edh-tm-v1";
+const D={name:"Torneo Commander",players:[],rounds:[],total:3,win:4,draw:1,loss:0,tab:"pl",view:0,seed:1,nid:1,custom:false,over:false};
+let S=Object.assign({},D);
+try{const x=localStorage.getItem(KEY);if(x)S=Object.assign({},D,JSON.parse(x))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const started=()=>S.rounds.length>0;
+const active=()=>S.players.filter(p=>!p.drop);
+const sug=n=>Math.max(3,Math.ceil(Math.log(Math.max(n,2))/Math.log(4))+1);
+const nm=id=>(S.players.find(p=>p.id===id)||{name:"?"}).name;
+
+/* Dimensione dei tavoli: preferisce 4, poi 3, mai 1–2 giocatori (tranne 5 = 3+2) */
+function sizes(n){
+  if(n<3)return null;
+  if(n===5)return[3,2];
+  const r=n%4;
+  if(r===0)return Array(n/4).fill(4);
+  const t=r===3?1:r===2?2:3;
+  return[...Array((n-3*t)/4).fill(4),...Array(t).fill(3)];
+}
+
+/* Statistiche: punti, V/P/S, OMW% (media % punti avversari, minimo 33%) */
+function stats(){
+  const st={};
+  S.players.forEach(p=>st[p.id]={id:p.id,name:p.name,drop:p.drop,pts:0,w:0,d:0,l:0,pl:0,opp:[],three:0,omw:0});
+  S.rounds.forEach(r=>r.pods.forEach(pod=>{
+    if(pod.ids.length===3&&!r.final)pod.ids.forEach(i=>st[i]&&st[i].three++);
+    if(r.final||pod.res==null)return;
+    pod.ids.forEach(i=>{
+      const s=st[i];if(!s)return;s.pl++;
+      pod.ids.forEach(o=>{if(o!==i)s.opp.push(o)});
+      if(pod.res==="D"){s.d++;s.pts+=+S.draw}
+      else if(pod.res===i){s.w++;s.pts+=+S.win}
+      else{s.l++;s.pts+=+S.loss}
+    });
+  }));
+  const pw=id=>{const s=st[id];return s.pl?Math.max(.33,s.pts/(S.win*s.pl)):.33};
+  Object.values(st).forEach(s=>{s.omw=s.opp.length?s.opp.reduce((a,o)=>a+pw(o),0)/s.opp.length:0});
+  return st;
+}
+function ranking(){
+  const st=stats();
+  return Object.values(st).sort((a,b)=>b.pts-a.pts||b.omw-a.omw||b.w-a.w||a.name.localeCompare(b.name));
+}
+
+/* Pairing svizzero: raggruppa per punti, evita rematch, ruota chi ha già giocato in tavoli da 3 */
+function pair(ids,first){
+  const st=stats(),sz=sizes(ids.length);if(!sz)return null;
+  const met=new Set();
+  S.rounds.forEach(r=>{if(r.final)return;r.pods.forEach(p=>p.ids.forEach(a=>p.ids.forEach(b=>{if(a<b)met.add(a+"-"+b)})))});
+  const m=(a,b)=>met.has(a<b?a+"-"+b:b+"-"+a);
+  let order=ids.map(i=>({i,k:Math.random()}));
+  if(!first)order.sort((a,b)=>st[b.i].pts-st[a.i].pts||b.k-a.k);else order.sort((a,b)=>a.k-b.k);
+  order=order.map(o=>o.i);
+  let pods=[],c=0;sz.forEach(n=>{pods.push(order.slice(c,c+n));c+=n});
+  if(first)return pods;
+  const cost=ps=>{let t=0;ps.forEach(p=>{
+    const mean=p.reduce((a,i)=>a+st[i].pts,0)/p.length;
+    p.forEach((a,x)=>{t+=Math.pow((st[a].pts-mean)/S.win,2);if(p.length===3)t+=st[a].three*6;for(let y=x+1;y<p.length;y++)if(m(a,p[y]))t+=80});
+  });return t};
+  let best=cost(pods);
+  for(let k=0;k<6000;k++){
+    const a=Math.floor(Math.random()*pods.length),b=Math.floor(Math.random()*pods.length);
+    if(a===b)continue;
+    const x=Math.floor(Math.random()*pods[a].length),y=Math.floor(Math.random()*pods[b].length);
+    [pods[a][x],pods[b][y]]=[pods[b][y],pods[a][x]];
+    const cn=cost(pods);
+    if(cn<=best)best=cn;else[pods[a][x],pods[b][y]]=[pods[b][y],pods[a][x]];
+  }
+  return pods;
+}
+const normRounds=()=>S.rounds.filter(r=>!r.final).length;
+const lastDone=()=>{const r=S.rounds[S.rounds.length-1];return r&&r.pods.every(p=>p.res!=null)};
+
+function nextRound(){
+  const ids=active().map(p=>p.id),pods=pair(ids,!normRounds());
+  if(!pods)return alert("Servono almeno 3 giocatori attivi.");
+  S.rounds.push({pods:pods.map(p=>({ids:p,res:null}))});
+  S.view=S.rounds.length-1;S.tab="rd";save();render();
+}
+function makeFinal(){
+  const top=ranking().filter(s=>!s.drop).slice(0,4).map(s=>s.id);
+  if(top.length<3)return;
+  S.rounds.push({final:true,pods:[{ids:top,res:null}]});
+  S.view=S.rounds.length-1;S.tab="rd";save();render();
+}
+
+const TABS=[["pl","Iscritti"],["rd","Turno"],["rk","Classifica"],["cf","Regole"]];
+function render(){
+  const act=active().length,n=normRounds();
+  document.getElementById("ttl").textContent=S.name;
+  document.getElementById("sub").textContent=started()?(S.over?"Torneo concluso":`Turno ${n} di ${S.total} · ${act} giocatori attivi`):`${S.players.length} iscritti · ${S.total} turni previsti`;
+  document.getElementById("nav").innerHTML=TABS.map(([k,l])=>`<button data-a="tab" data-k="${k}" class="${S.tab===k?"on":""}">${l}</button>`).join("");
+  const el=document.getElementById("app");
+  el.innerHTML=({pl:vPlayers,rd:vRound,rk:vRank,cf:vConf})[S.tab]();
+}
+function vPlayers(){
+  const n=active().length,sz=sizes(n);
+  const list=S.players.map(p=>`<div class="pl ${p.drop?"dr":""}"><span class="nm">${esc(p.name)}</span><span class="row">${started()?`<button class="sm" data-a="drop" data-id="${p.id}">${p.drop?"Rientra":"Ritira"}</button>`:`<button class="sm" data-a="del" data-id="${p.id}" aria-label="Rimuovi ${esc(p.name)}">Rimuovi</button>`}</span></div>`).join("")||`<div class="note">Aggiungi almeno 3 giocatori per iniziare.</div>`;
+  const prev=sz?`${sz.filter(x=>x===4).length} tavoli da 4`+(sz.filter(x=>x===3).length?`, ${sz.filter(x=>x===3).length} da 3`:"")+(sz.includes(2)?`, 1 da 2`:""):"";
+  return `<div class="card"><h3>Nuovo giocatore</h3><div class="row"><input id="pn" placeholder="Nome" maxlength="30" autocomplete="off"><button class="p" data-a="add">Aggiungi</button></div>${started()?`<div class="note" style="margin-top:6px">I nuovi iscritti entrano dal prossimo turno con 0 punti.</div>`:""}</div>
+  <div class="card"><h3>Giocatori (${S.players.length})</h3>${list}</div>
+  ${n>=3?`<div class="card"><div class="note">Distribuzione: ${prev}.${n===5?` <span class="warn">Con 5 giocatori un tavolo è da 2: consigliato aspettare un altro iscritto.</span>`:""}</div></div>`:""}
+  ${!started()?`<button class="p" style="width:100%" data-a="start" ${n<3?"disabled":""}>Avvia torneo</button>`:""}`;
+}
+function podCard(r,ri,pod,pi){
+  const st=stats(),dis=ri!==S.rounds.length-1&&false;
+  const seats=pod.ids.map(id=>{
+    const c=pod.res==null?"":pod.res==="D"?"draw":pod.res===id?"win":"loss";
+    return `<button class="seat ${c}" data-a="win" data-r="${ri}" data-p="${pi}" data-id="${id}"><span>${esc(nm(id))}</span><span class="tag">${c==="win"?"Vittoria":c==="draw"?"Pareggio":c==="loss"?"Sconfitta":st[id].pts+" pt"}</span></button>`}).join("");
+  return `<div class="card"><div class="row sp"><h3>${r.final?"Finale":"Tavolo "+(pi+1)}</h3><span class="tag">${pod.ids.length} giocatori${pod.res==null?" · da registrare":""}</span></div>${seats}<button class="sm" data-a="draw" data-r="${ri}" data-p="${pi}" style="width:100%">${pod.res==="D"?"Annulla pareggio":"Pareggio (nessun vincitore)"}</button></div>`;
+}
+function vRound(){
+  if(!started())return `<div class="card"><h3>Nessun turno in corso</h3><div class="note">Avvia il torneo dalla scheda Iscritti.</div></div>`;
+  const ri=Math.min(S.view,S.rounds.length-1),r=S.rounds[ri];
+  let k=0;const chips=S.rounds.map((x,i)=>`<button data-a="view" data-i="${i}" class="${i===ri?"on":""}">${x.final?"Finale":"Turno "+(++k)}</button>`).join("");
+  const hasFinal=S.rounds.some(x=>x.final);
+  let act="";
+  if(ri===S.rounds.length-1&&!S.over){
+    const done=lastDone();
+    if(r.final)act=`<button class="p" style="width:100%" data-a="end" ${done?"":"disabled"}>Concludi torneo</button>`;
+    else if(normRounds()<S.total)act=`<button class="p" style="width:100%" data-a="next" ${done?"":"disabled"}>Genera turno ${normRounds()+1}</button>`;
+    else act=`<div class="row"><button class="p" style="flex:1" data-a="final" ${done?"":"disabled"}>Finale Top 4</button><button style="flex:1" data-a="end" ${done?"":"disabled"}>Concludi</button></div>`;
+    if(!done)act+=`<div class="note" style="margin-top:6px">Registra il risultato di ogni tavolo per proseguire.</div>`;
+  }
+  return `<div class="chips">${chips}</div>${r.pods.map((p,i)=>podCard(r,ri,p,i)).join("")}${act}`;
+}
+function vRank(){
+  if(!started())return `<div class="card"><div class="note">La classifica compare dopo il primo turno.</div></div>`;
+  const rk=ranking(),fin=S.rounds.find(x=>x.final&&x.pods[0].res&&x.pods[0].res!=="D");
+  const champ=fin?`<div class="champ">Campione: ${esc(nm(fin.pods[0].res))}</div>`:"";
+  return `${champ}<div class="card"><table><tr><th>#</th><th>Giocatore</th><th>Pt</th><th>V-P-S</th><th>OMW</th></tr>${rk.map((s,i)=>`<tr class="${s.drop?"dr":""}"><td>${i+1}</td><td>${esc(s.name)}</td><td><b>${s.pts}</b></td><td>${s.w}-${s.d}-${s.l}</td><td>${(s.omw*100).toFixed(1)}%</td></tr>`).join("")}</table></div>
+  <div class="note">Spareggi: punti, OMW% (media dei punti-percentuale degli avversari, minimo 33%), vittorie, nome. V-P-S = vittorie, pareggi, sconfitte.</div>
+  <button style="width:100%;margin-top:10px" data-a="copy">Copia classifica</button>`;
+}
+function vConf(){
+  const lock=started();
+  return `<div class="card"><h3>Torneo</h3><label for="tn">Nome</label><input id="tn" value="${esc(S.name)}" maxlength="40"></div>
+  <div class="card"><h3>Turni e punteggi</h3><label for="tr">Numero di turni (consigliati: ${sug(Math.max(S.players.length,3))})</label><input id="tr" type="number" min="1" max="10" value="${S.total}"><div class="g3" style="margin-top:10px"><div><label for="pw">Vittoria</label><input id="pw" type="number" min="0" value="${S.win}" ${lock?"disabled":""}></div><div><label for="pd">Pareggio</label><input id="pd" type="number" min="0" value="${S.draw}" ${lock?"disabled":""}></div><div><label for="pp">Sconfitta</label><input id="pp" type="number" min="0" value="${S.loss}" ${lock?"disabled":""}></div></div><div class="note" style="margin-top:8px">Il punteggio è uguale nei tavoli da 3 e da 4. I punti non si possono cambiare a torneo avviato.</div><button class="p" style="width:100%;margin-top:10px" data-a="saveconf">Salva impostazioni</button></div>
+  <div class="card"><h3>Come funzionano i pairing</h3><div class="note">Turno 1: tavoli casuali. Dal turno 2: sistema svizzero, cioè giocatori con punteggio simile allo stesso tavolo, evitando di rincontrare gli stessi avversari. Chi ha già giocato a un tavolo da 3 viene scelto per ultimo per i tavoli da 3 successivi.</div></div>
+  <div class="row"><button style="flex:1" data-a="theme">Tema chiaro/scuro</button><button style="flex:1;color:#b3261e" data-a="reset">Nuovo torneo</button></div>`;
+}
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b)return;
+  const a=b.dataset.a,id=b.dataset.id?+b.dataset.id:null;
+  if(a==="tab"){S.tab=b.dataset.k}
+  else if(a==="add"){const v=document.getElementById("pn").value.trim();if(!v)return;
+    if(S.players.some(p=>p.name.toLowerCase()===v.toLowerCase()))return alert("Esiste già un giocatore con questo nome.");
+    S.players.push({id:S.nid++,name:v,drop:false});if(!started())S.total=Math.max(S.total,sug(S.players.length))&&sug(Math.max(S.players.length,3));}
+  else if(a==="del"){S.players=S.players.filter(p=>p.id!==id);S.total=sug(Math.max(S.players.length,3))}
+  else if(a==="drop"){const p=S.players.find(p=>p.id===id);p.drop=!p.drop}
+  else if(a==="start"){if(active().length>=3)return nextRound()}
+  else if(a==="view"){S.view=+b.dataset.i}
+  else if(a==="win"||a==="draw"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];
+    const v=a==="draw"?"D":id;pod.res=pod.res===v?null:v}
+  else if(a==="next")return nextRound();
+  else if(a==="final")return makeFinal();
+  else if(a==="end"){S.over=true;S.tab="rk"}
+  else if(a==="saveconf"){const g=i=>document.getElementById(i);
+    S.name=g("tn").value.trim()||"Torneo Commander";S.total=Math.min(10,Math.max(1,+g("tr").value||3));
+    if(!started()){S.win=Math.max(1,+g("pw").value||4);S.draw=Math.max(0,+g("pd").value||0);S.loss=Math.max(0,+g("pp").value||0)}
+    S.tab="pl"}
+  else if(a==="copy"){const t=S.name+"\n"+ranking().map((s,i)=>`${i+1}. ${s.name} – ${s.pts} pt (OMW ${(s.omw*100).toFixed(1)}%)`).join("\n");
+    try{navigator.clipboard.writeText(t).then(()=>alert("Classifica copiata."),()=>alert(t))}catch(x){alert(t)};return}
+  else if(a==="theme"){const r=document.documentElement,d=getComputedStyle(r).getPropertyValue("--bg").trim()==="#0f1c18";r.dataset.theme=d?"light":"dark";try{localStorage.setItem(KEY+"-th",r.dataset.theme)}catch(x){};return}
+  else if(a==="reset"){if(confirm("Cancellare tutti i dati e iniziare un nuovo torneo?")){S=Object.assign({},D);try{localStorage.removeItem(KEY)}catch(x){}}}
+  save();render();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="pn")document.querySelector('[data-a="add"]').click()});
+try{const t=localStorage.getItem(KEY+"-th");if(t)document.documentElement.dataset.theme=t}catch(e){}
+render();
+</script>
+<script>if("serviceWorker" in navigator&&location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
+</body>
+</html>
