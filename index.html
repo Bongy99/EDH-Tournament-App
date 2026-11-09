@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EDH Tournament Manager</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1c18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EDH Manager">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1ea;--surf:#fff;--ink:#14201c;--mut:#5d6b64;--line:#d3dacf;--acc:#1f6b57;--accink:#fff;--gold:#b97b00;--win:#d9f0e3;--draw:#fbefc8;--loss:#f3dede;--r:14px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1c18;--surf:#173029;--ink:#eef0e6;--mut:#9db0a6;--line:#2a4a40;--acc:#e3b341;--accink:#1a1405;--gold:#e3b341;--win:#1d4a39;--draw:#4a4119;--loss:#4a2626}}
+:root[data-theme="dark"]{--bg:#0f1c18;--surf:#173029;--ink:#eef0e6;--mut:#9db0a6;--line:#2a4a40;--acc:#e3b341;--accink:#1a1405;--gold:#e3b341;--win:#1d4a39;--draw:#4a4119;--loss:#4a2626}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Bricolage Grotesque",system-ui,sans-serif;min-height:100%;padding-bottom:84px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header{padding:16px 16px 8px;max-width:640px;margin:0 auto}
+h1{font-size:26px;font-weight:800;margin:0;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin-top:2px}
+main{max-width:640px;margin:0 auto;padding:8px 16px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:0 0 12px}
+.card h3{margin:0 0 8px;font-size:17px;font-weight:600}
+.row{display:flex;gap:8px;align-items:center}
+.row.sp{justify-content:space-between}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input:focus-visible,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:10px;padding:10px 14px;min-height:44px}
+button.p{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.sm{padding:6px 10px;min-height:36px;font-size:14px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surf);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;border:0;border-radius:0;background:none;min-height:56px;font-size:12px;padding:0 2px;color:var(--mut)}
+nav button.on{color:var(--acc);font-weight:800;box-shadow:inset 0 3px 0 var(--acc)}
+.pl{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}
+.pl.dr .nm{text-decoration:line-through;color:var(--mut)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px}
+.chips button{white-space:nowrap;min-height:38px;padding:6px 14px;border-radius:20px}
+.chips button.on{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.seat{width:100%;display:flex;justify-content:space-between;text-align:left;margin:0 0 6px}
+.seat.win{background:var(--win);border-color:var(--acc);font-weight:600}
+.seat.draw{background:var(--draw)}
+.seat.loss{background:var(--loss);color:var(--mut)}
+.tag{font-size:12px;border-radius:8px;padding:2px 8px;background:var(--bg);color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 3px;text-align:right;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--mut);font-weight:600;border-top:0}
+th:nth-child(2),td:nth-child(2){text-align:left;width:100%}
+td:first-child{text-align:left;color:var(--mut)}
+tr.dr td{color:var(--mut)}
+.champ{background:var(--acc);color:var(--accink);border-radius:var(--r);padding:14px;margin-bottom:12px;font-weight:800;font-size:20px}
+.note{font-size:13px;color:var(--mut)}
+label{font-size:14px;color:var(--mut);display:block;margin:0 0 4px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.warn{color:var(--gold);font-size:14px;margin:6px 0 0}
+</style>
+</head>
+<body>
+<header><h1 id="ttl">EDH Tournament Manager</h1><div class="sub" id="sub"></div></header>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script>
+const KEY="edh-tm-v2";
+const DSC={w4:[4,3,2,1],w3:[3,2,1],d44:1,d43a:1,d43o:0,d42a:3,d42l:2,d42f:1,d33:1,d32a:3,d32o:1};
+const mkD=()=>({name:"Torneo Commander",players:[],rounds:[],total:3,win:4,draw:1,loss:0,tab:"pl",view:0,seed:1,nid:1,custom:false,over:false,hist:[],hv:null,archId:null});
+let S=mkD();
+try{const x=localStorage.getItem(KEY);if(x)S=Object.assign(mkD(),JSON.parse(x))}catch(e){}
+S.sc=Object.assign(JSON.parse(JSON.stringify(DSC)),S.sc||{});
+const clone=o=>JSON.parse(JSON.stringify(o));
+const snap=()=>({name:S.name,players:clone(S.players),rounds:clone(S.rounds),total:S.total,sc:clone(S.sc),over:S.over});
+function archive(){const e=Object.assign({id:Date.now(),date:new Date().toLocaleDateString("it-IT")},snap());S.hist.unshift(e);S.archId=e.id}
+const save=()=>{if(S.over&&S.archId){const e=S.hist.find(h=>h.id===S.archId);if(e)Object.assign(e,snap())}try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const started=()=>S.rounds.length>0;
+const active=()=>S.players.filter(p=>!p.drop);
+const sug=n=>Math.max(3,Math.ceil(Math.log(Math.max(n,2))/Math.log(4))+1);
+const nm=id=>(S.players.find(p=>p.id===id)||{name:"?"}).name;
+
+/* Tavoli da 4, resto da 3 (mai 1–2 giocatori): con 5 giocatori non è possibile */
+function sizes(n){
+  if(n<3||n===5)return null;
+  const r=n%4;if(r===0)return Array(n/4).fill(4);
+  const t=r===3?1:r===2?2:3;
+  return[...Array((n-3*t)/4).fill(4),...Array(t).fill(3)];
+}
+const maxPts=z=>{const c=S.sc;return Math.max(...(z===4?[...c.w4,c.d44,c.d43a,c.d43o,c.d42a,c.d42l,c.d42f]:[...c.w3,c.d33,c.d32a,c.d32o]).map(Number))};
+const pc=x=>(x*100).toFixed(1)+"%";
+/* Punti di un tavolo: tutti i valori vengono dalla scheda Punti */
+function podPts(pod){
+  const c=S.sc,z=pod.ids.length,m={},x=pod.res;if(!x)return m;
+  if(x.t==="w"){x.order.forEach((id,i)=>m[id]=+c[z===4?"w4":"w3"][i])}
+  else{const k=x.alive.length;pod.ids.forEach(id=>m[id]=0);
+    if(z===4){
+      if(k===4)x.alive.forEach(id=>m[id]=+c.d44);
+      else if(k===3){x.alive.forEach(id=>m[id]=+c.d43a);x.out.forEach(id=>m[id]=+c.d43o)}
+      else{x.alive.forEach(id=>m[id]=+c.d42a);m[x.out[0]]=+c.d42f;m[x.out[1]]=+c.d42l}
+    }else{
+      if(k===3)x.alive.forEach(id=>m[id]=+c.d33);
+      else{x.alive.forEach(id=>m[id]=+c.d32a);x.out.forEach(id=>m[id]=+c.d32o)}
+    }
+  }
+  return m;
+}
+/* Standard dei software torneo: Punti, poi %VP (OMW), %VIA (GW), %VPA (OGW); minimo 33% per avversario */
+function stats(){
+  const st={};
+  S.players.forEach(p=>st[p.id]={id:p.id,name:p.name,drop:p.drop,pts:0,mx:0,pl:0,opp:[],three:0,via:0,vp:0,vpa:0});
+  S.rounds.forEach(r=>r.pods.forEach(pod=>{
+    if(pod.ids.length===3&&!r.final)pod.ids.forEach(i=>st[i]&&st[i].three++);
+    if(r.final||!pod.res)return;
+    const m=podPts(pod);
+    pod.ids.forEach(i=>{const s=st[i];if(!s)return;s.pl++;s.pts+=m[i];s.mx+=maxPts(pod.ids.length);pod.ids.forEach(o=>{if(o!==i)s.opp.push(o)})});
+  }));
+  const L=Object.values(st);
+  L.forEach(s=>s.via=s.mx?s.pts/s.mx:0);
+  L.forEach(s=>s.vp=s.opp.length?s.opp.reduce((a,o)=>a+Math.max(.33,st[o].via),0)/s.opp.length:0);
+  L.forEach(s=>s.vpa=s.opp.length?s.opp.reduce((a,o)=>a+Math.max(.33,st[o].vp),0)/s.opp.length:0);
+  return st;
+}
+function ranking(){
+  return Object.values(stats()).sort((a,b)=>b.pts-a.pts||b.vp-a.vp||b.via-a.via||b.vpa-a.vpa||a.name.localeCompare(b.name));
+}
+/* Pairing svizzero: evitare i rematch ha priorità assoluta (penalità 10000) sul punteggio simile */
+let LR=0;
+function pair(ids,first){
+  const st=stats(),sz=sizes(ids.length);if(!sz)return null;
+  const met=new Set();
+  S.rounds.forEach(r=>{if(r.final)return;r.pods.forEach(p=>p.ids.forEach(a=>p.ids.forEach(b=>{if(a<b)met.add(a+"-"+b)})))});
+  const m=(a,b)=>met.has(a<b?a+"-"+b:b+"-"+a);
+  const mk=o=>{const ps=[];let c=0;sz.forEach(n=>{ps.push(o.slice(c,c+n));c+=n});return ps};
+  const sh=a=>a.map(i=>[i,Math.random()]).sort((x,y)=>x[1]-y[1]).map(x=>x[0]);
+  if(first){LR=0;return mk(sh(ids))}
+  const base=sh(ids).sort((a,b)=>st[b].pts-st[a].pts);
+  const cost=ps=>{let t=0;ps.forEach(p=>{const mean=p.reduce((a,i)=>a+st[i].pts,0)/p.length;
+    p.forEach((a,x)=>{t+=Math.pow(st[a].pts-mean,2);if(p.length===3)t+=st[a].three*3;for(let y=x+1;y<p.length;y++)if(m(a,p[y]))t+=10000})});return t};
+  let best=null,bc=1e18;
+  for(let t=0;t<6;t++){
+    const pods=mk(t?sh(ids):base);let c=cost(pods);
+    for(let k=0;k<5000;k++){
+      const a=Math.floor(Math.random()*pods.length),b=Math.floor(Math.random()*pods.length);
+      if(a===b)continue;
+      const x=Math.floor(Math.random()*pods[a].length),y=Math.floor(Math.random()*pods[b].length);
+      [pods[a][x],pods[b][y]]=[pods[b][y],pods[a][x]];
+      const cn=cost(pods);
+      if(cn<=c)c=cn;else[pods[a][x],pods[b][y]]=[pods[b][y],pods[a][x]];
+    }
+    if(c<bc){bc=c;best=pods.map(p=>p.slice())}
+  }
+  LR=0;best.forEach(p=>p.forEach((a,x)=>{for(let y=x+1;y<p.length;y++)if(m(a,p[y]))LR++}));
+  return best;
+}
+const normRounds=()=>S.rounds.filter(r=>!r.final).length;
+const lastDone=()=>{const r=S.rounds[S.rounds.length-1];return r&&r.pods.every(p=>p.res!=null)};
+
+function nextRound(){
+  const ids=active().map(p=>p.id),pods=pair(ids,!normRounds());
+  if(!pods)return alert("Servono 3, 4 o più di 5 giocatori attivi: con 5 non si possono fare tavoli da 3 o 4.");
+  S.rounds.push({rep:LR,pods:pods.map(p=>({ids:p,res:null}))});
+  S.view=S.rounds.length-1;S.tab="rd";save();render();
+}
+function makeFinal(){
+  const top=ranking().filter(s=>!s.drop).slice(0,4).map(s=>s.id);
+  if(top.length<3)return;
+  S.rounds.push({final:true,pods:[{ids:top,res:null}]});
+  S.view=S.rounds.length-1;S.tab="rd";save();render();
+}
+
+const TABS=[["pl","Iscritti"],["rd","Turno"],["rk","Classifica"],["sc","Punti"],["hs","Storico"],["cf","Regole"]];
+function render(){
+  const act=active().length,n=normRounds();
+  document.getElementById("ttl").textContent=S.name;
+  document.getElementById("sub").textContent=started()?(S.over?"Torneo concluso":`Turno ${n} di ${S.total} · ${act} giocatori attivi`):`${S.players.length} iscritti · ${S.total} turni previsti`;
+  document.getElementById("nav").innerHTML=TABS.map(([k,l])=>`<button data-a="tab" data-k="${k}" class="${S.tab===k?"on":""}">${l}</button>`).join("");
+  const el=document.getElementById("app");
+  el.innerHTML=({pl:vPlayers,rd:vRound,rk:vRank,sc:vScore,hs:vHist,cf:vConf})[S.tab]();
+}
+function vPlayers(){
+  const n=active().length,sz=sizes(n);
+  const list=S.players.map(p=>`<div class="pl ${p.drop?"dr":""}"><span class="nm">${esc(p.name)}</span><span class="row">${started()?`<button class="sm" data-a="drop" data-id="${p.id}">${p.drop?"Rientra":"Ritira"}</button>`:`<button class="sm" data-a="del" data-id="${p.id}" aria-label="Rimuovi ${esc(p.name)}">Rimuovi</button>`}</span></div>`).join("")||`<div class="note">Aggiungi almeno 3 giocatori per iniziare.</div>`;
+  const prev=sz?`${sz.filter(x=>x===4).length} tavoli da 4`+(sz.filter(x=>x===3).length?`, ${sz.filter(x=>x===3).length} da 3`:"")+(sz.includes(2)?`, 1 da 2`:""):"";
+  return `<div class="card"><h3>Nuovo giocatore</h3><div class="row"><input id="pn" placeholder="Nome" maxlength="30" autocomplete="off"><button class="p" data-a="add">Aggiungi</button></div>${started()?`<div class="note" style="margin-top:6px">I nuovi iscritti entrano dal prossimo turno con 0 punti.</div>`:""}</div>
+  <div class="card"><h3>Giocatori (${S.players.length})</h3>${list}</div>
+  ${n>=3?`<div class="card"><div class="note">Distribuzione: ${prev}.${n===5?` <span class="warn">Con 5 giocatori non si possono fare tavoli da 3 o 4: serve un iscritto in più o in meno.</span>`:""}</div></div>`:""}
+  ${!started()?`<button class="p" style="width:100%" data-a="start" ${!sizes(n)?"disabled":""}>Avvia torneo</button>`:""}`;
+}
+function podCard(r,ri,pod,pi){
+  const z=pod.ids.length,m=podPts(pod),md=pod.m||"w",x=pod.res,al=pod.al||[],sq=pod.seq||[],o=["1°","2°","3°","4°"];
+  const seats=pod.ids.map(id=>{
+    let c="",tg="";
+    if(x){
+      if(x.t==="w"){tg=o[x.order.indexOf(id)]+" · "+m[id]+" pt";c=x.order[0]===id?"win":""}
+      else{const v=x.alive.includes(id);c=v?"draw":"loss";tg=(v?"Vivo":"Eliminato")+" · "+m[id]+" pt"}
+    }else if(md==="w"&&sq.includes(id)){c="win";tg=o[sq.indexOf(id)]}
+    else if(md==="d"&&al.includes(id)){c="draw";tg="Vivo"}
+    return `<button class="seat ${c}" data-a="seat" data-r="${ri}" data-p="${pi}" data-id="${id}"><span>${esc(nm(id))}</span><span class="tag">${tg}</span></button>`}).join("");
+  const hint=x?"Risultato registrato. Tocca un giocatore per annullarlo.":md==="w"?"Tocca i giocatori in ordine di classifica: 1°, 2°… (l’ultimo è automatico).":(pod.st===1?"Tocca chi è stato eliminato per primo.":"Tocca i giocatori ancora vivi a fine partita, oppure usa “Pareggio totale”.");
+  const ready=md==="d"&&!x&&al.length>=2&&pod.st!==1;
+  const a=`data-r="${ri}" data-p="${pi}"`;
+  return `<div class="card"><div class="row sp"><h3>${r.final?"Finale":"Tavolo "+(pi+1)}</h3><span class="tag">${z} giocatori${x?"":" · da registrare"}</span></div>
+  <div class="chips" style="padding-bottom:8px"><button class="${md==="w"?"on":""}" data-a="mode" data-m="w" ${a}>Vittoria netta</button><button class="${md==="d"?"on":""}" data-a="mode" data-m="d" ${a}>Pareggio</button></div>
+  ${seats}<div class="note" style="margin:2px 0 8px">${hint}</div>
+  <div class="row">${ready?`<button class="p sm" data-a="conf" ${a}>${z===4&&al.length===2?"Pareggio a 2: avanti":"Conferma pareggio"}</button>`:""}${md==="d"&&!x?`<button class="sm" data-a="dall" ${a}>Pareggio totale (${z} vivi)</button>`:""}<button class="sm" data-a="clr" ${a}>Azzera</button></div></div>`;
+}
+function vRound(){
+  if(!started())return `<div class="card"><h3>Nessun turno in corso</h3><div class="note">Avvia il torneo dalla scheda Iscritti.</div></div>`;
+  const ri=Math.min(S.view,S.rounds.length-1),r=S.rounds[ri];
+  let k=0;const chips=S.rounds.map((x,i)=>`<button data-a="view" data-i="${i}" class="${i===ri?"on":""}">${x.final?"Finale":"Turno "+(++k)}</button>`).join("");
+  const hasFinal=S.rounds.some(x=>x.final);
+  let act="";
+  if(ri===S.rounds.length-1&&!S.over){
+    const done=lastDone();
+    if(r.final)act=`<button class="p" style="width:100%" data-a="end" ${done?"":"disabled"}>Concludi torneo</button>`;
+    else if(normRounds()<S.total)act=`<button class="p" style="width:100%" data-a="next" ${done?"":"disabled"}>Genera turno ${normRounds()+1}</button>`;
+    else act=`<div class="row"><button class="p" style="flex:1" data-a="final" ${done?"":"disabled"}>Finale Top 4</button><button style="flex:1" data-a="end" ${done?"":"disabled"}>Concludi</button></div>`;
+    if(!done)act+=`<div class="note" style="margin-top:6px">Registra il risultato di ogni tavolo per proseguire.</div>`;
+  }
+  return `<div class="chips">${chips}</div>${r.rep?`<div class="card warn">Attenzione: ${r.rep} coppia/e già incontrata/e non evitabile/i con i giocatori rimasti.</div>`:""}${r.pods.map((p,i)=>podCard(r,ri,p,i)).join("")}${act}`;
+}
+function vRank(){
+  if(!started())return `<div class="card"><div class="note">La classifica compare dopo il primo turno.</div></div>`;
+  const rk=ranking(),fin=S.rounds.find(x=>x.final&&x.pods[0].res&&x.pods[0].res.t==="w");
+  const champ=fin?`<div class="champ">Campione: ${esc(nm(fin.pods[0].res.order[0]))}</div>`:"";
+  return `${champ}<div class="card"><table><tr><th>Pos</th><th>Nome</th><th>Pt</th><th>%VIA</th><th>%VP</th><th>%VPA</th></tr>${rk.map((s,i)=>`<tr class="${s.drop?"dr":""}"><td>${i+1}</td><td>${esc(s.name)}</td><td><b>${s.pts}</b></td><td>${pc(s.via)}</td><td>${pc(s.vp)}</td><td>${pc(s.vpa)}</td></tr>`).join("")}</table></div>
+  <div class="note">Ordine standard: punti, %VP (OMW), %VIA (GW), %VPA (OGW). Ritirati in grigio.</div>
+  <button style="width:100%;margin-top:10px" data-a="copy">Copia classifica</button>`;
+}
+function vConf(){
+  return `<div class="card"><h3>Torneo</h3><label for="tn">Nome</label><input id="tn" value="${esc(S.name)}" maxlength="40"></div>
+  <div class="card"><h3>Turni</h3><label for="tr">Numero di turni (consigliati: ${sug(Math.max(S.players.length,3))})</label><input id="tr" type="number" min="1" max="10" value="${S.total}"><button class="p" style="width:100%;margin-top:10px" data-a="saveconf">Salva impostazioni</button></div>
+   <div class="card"><h3>Punteggi</h3><div class="note">Tutti i punteggi si modificano nella scheda Punti.</div></div>
+  <div class="card"><h3>Spareggi e pairing</h3><div class="note">%VIA = punti ottenuti / punti massimi disponibili. %VP = media %VIA degli avversari. %VPA = media %VP degli avversari. Entrambe con minimo 33% per avversario. Classifica: punti, %VP, %VIA, %VPA, come nei software di gestione tornei.<br>Turno 1 casuale. Dal turno 2 si accoppia per punti, ma non rincontrare avversari ha priorità assoluta. Tavoli da 4, con tavoli da 3 per il resto.</div></div>
+  <div class="row"><button style="flex:1" data-a="theme">Tema chiaro/scuro</button><button style="flex:1;color:#b3261e" data-a="reset">Nuovo torneo</button></div>`;
+}
+const wS=(e,f)=>{const b=[S.players,S.rounds,S.sc];S.players=e.players;S.rounds=e.rounds;S.sc=e.sc;try{return f()}finally{[S.players,S.rounds,S.sc]=b}};
+function topOf(e){return wS(e,()=>{const fin=S.rounds.find(x=>x.final&&x.pods[0].res&&x.pods[0].res.t==="w"),rk=ranking();return{c:fin?nm(fin.pods[0].res.order[0]):null,t:rk[0]?rk[0].name:"-"}})}
+function hDetail(e){return wS(e,()=>{
+  const rk=ranking(),t=topOf(e);let k=0;
+  const rds=S.rounds.map(r=>{const lab=r.final?"Finale":"Turno "+(++k);
+    return `<div class="card"><h3>${lab}</h3>${r.pods.map((p,i)=>{const m=podPts(p);
+      return `<div class="note" style="margin-bottom:6px"><b>${r.final?"Finale":"Tavolo "+(i+1)}</b>${p.res&&p.res.t==="d"?" (pareggio)":""}: ${(p.res&&p.res.t==="w"?p.res.order:p.ids).map(id=>esc(nm(id))+(p.res?" ("+m[id]+")":"")).join(", ")}</div>`}).join("")}</div>`}).join("");
+  return `<button class="sm" data-a="hback" style="margin-bottom:10px">← Torna allo storico</button>
+  <div class="card"><h3>${esc(e.name)}</h3><div class="note">${e.date} · ${e.players.length} giocatori${e.over?"":" · torneo non concluso"}</div></div>
+  ${t.c?`<div class="champ">Campione: ${esc(t.c)}</div>`:""}
+  <div class="card"><table><tr><th>Pos</th><th>Nome</th><th>Pt</th><th>%VIA</th><th>%VP</th><th>%VPA</th></tr>${rk.map((s,i)=>`<tr class="${s.drop?"dr":""}"><td>${i+1}</td><td>${esc(s.name)}</td><td><b>${s.pts}</b></td><td>${pc(s.via)}</td><td>${pc(s.vp)}</td><td>${pc(s.vpa)}</td></tr>`).join("")}</table></div>
+  <h3 style="margin:14px 0 8px">Turni giocati</h3>${rds}`})}
+function vHist(){
+  const e=S.hv&&S.hist.find(h=>h.id===S.hv);
+  if(e)return hDetail(e);
+  if(!S.hist.length)return `<div class="card"><h3>Storico tornei</h3><div class="note">Nessun torneo salvato. Un torneo viene salvato quando premi “Concludi torneo”, oppure quando ne avvii uno nuovo e scegli di salvare quello attuale.</div></div>`;
+  return S.hist.map(h=>{const t=topOf(h);return `<div class="card"><div class="row sp"><h3>${esc(h.name)}</h3><span class="tag">${h.date}</span></div><div class="note">${h.players.length} giocatori · ${h.rounds.filter(r=>!r.final).length} turni · ${t.c?"Campione":"1° in classifica"}: <b>${esc(t.c||t.t)}</b>${h.over?"":" · non concluso"}</div><div class="row" style="margin-top:8px"><button class="p sm" data-a="hopen" data-id="${h.id}">Apri</button><button class="sm" data-a="hdel" data-id="${h.id}">Elimina</button></div></div>`}).join("")+`<button style="width:100%;color:#b3261e" data-a="hclr">Elimina tutta la cronologia</button>`;
+}
+const SCF=[
+ ["Tavolo da 4: vittoria netta",[["1° posto","w4.0"],["2° posto","w4.1"],["3° posto","w4.2"],["4° posto","w4.3"]]],
+ ["Tavolo da 4: pareggio totale (4 vivi)",[["Ogni giocatore","d44"]]],
+ ["Tavolo da 4: pareggio con 3 vivi",[["Ogni vivo","d43a"],["Eliminato","d43o"]]],
+ ["Tavolo da 4: pareggio con 2 vivi",[["Ogni vivo","d42a"],["Eliminato per ultimo","d42l"],["Eliminato per primo","d42f"]]],
+ ["Tavolo da 3: vittoria netta",[["1° posto","w3.0"],["2° posto","w3.1"],["3° posto","w3.2"]]],
+ ["Tavolo da 3: pareggio totale (3 vivi)",[["Ogni giocatore","d33"]]],
+ ["Tavolo da 3: pareggio con 2 vivi",[["Ogni vivo","d32a"],["Eliminato","d32o"]]]];
+const scv=k=>{const [a,i]=k.split(".");return i===undefined?S.sc[a]:S.sc[a][i]};
+function vScore(){
+  return `<div class="note" style="margin-bottom:10px">Punti assegnati a ogni giocatore in base al risultato del tavolo. Le modifiche valgono subito per tutti i turni, compresi i risultati già inseriti, e sono salvate con il torneo.</div>`
+  +SCF.map(([t,f])=>`<div class="card"><h3>${t}</h3><div class="g3">${f.map(([l,k])=>`<div><label for="sc_${k}">${l}</label><input id="sc_${k}" type="number" step="0.5" data-sc="${k}" value="${scv(k)}"></div>`).join("")}</div></div>`).join("")
+  +`<button style="width:100%" data-a="screset">Ripristina punteggi standard</button>`;
+}
+document.addEventListener("change",e=>{const k=e.target.dataset&&e.target.dataset.sc;if(!k)return;let v=parseFloat(e.target.value);if(isNaN(v))v=0;const [a,i]=k.split(".");if(i===undefined)S.sc[a]=v;else S.sc[a][i]=v;save()});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b)return;
+  const a=b.dataset.a,id=b.dataset.id?+b.dataset.id:null;
+  if(a==="tab"){S.tab=b.dataset.k}
+  else if(a==="add"){const v=document.getElementById("pn").value.trim();if(!v)return;
+    if(S.players.some(p=>p.name.toLowerCase()===v.toLowerCase()))return alert("Esiste già un giocatore con questo nome.");
+    S.players.push({id:S.nid++,name:v,drop:false});if(!started())S.total=Math.max(S.total,sug(S.players.length))&&sug(Math.max(S.players.length,3));}
+  else if(a==="del"){S.players=S.players.filter(p=>p.id!==id);S.total=sug(Math.max(S.players.length,3))}
+  else if(a==="drop"){const p=S.players.find(p=>p.id===id);p.drop=!p.drop}
+  else if(a==="start"){if(active().length>=3)return nextRound()}
+  else if(a==="view"){S.view=+b.dataset.i}
+  else if(a==="seat"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p],z=pod.ids.length;
+    if(pod.res){pod.res=null;pod.seq=[];pod.al=[];pod.st=0}
+    else if((pod.m||"w")==="w"){pod.seq=pod.seq||[];
+      if(pod.seq.includes(id))pod.seq=[];
+      else{pod.seq.push(id);if(pod.seq.length===z-1)pod.res={t:"w",order:[...pod.seq,pod.ids.find(i=>!pod.seq.includes(i))]}}}
+    else{pod.al=pod.al||[];
+      if(pod.st===1&&!pod.al.includes(id)){const o=pod.ids.filter(i=>!pod.al.includes(i));pod.res={t:"d",alive:pod.al.slice(),out:[id,o.find(i=>i!==id)]}}
+      else{pod.st=0;pod.al=pod.al.includes(id)?pod.al.filter(i=>i!==id):[...pod.al,id]}}}
+  else if(a==="mode"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];pod.m=b.dataset.m;pod.res=null;pod.seq=[];pod.al=[];pod.st=0}
+  else if(a==="clr"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];pod.res=null;pod.seq=[];pod.al=[];pod.st=0}
+  else if(a==="dall"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];pod.al=pod.ids.slice();pod.st=0;pod.res={t:"d",alive:pod.ids.slice(),out:[]}}
+  else if(a==="conf"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];if(pod.ids.length===4&&pod.al.length===2)pod.st=1;else pod.res={t:"d",alive:pod.al.slice(),out:pod.ids.filter(i=>!pod.al.includes(i))}}
+  else if(a==="next")return nextRound();
+  else if(a==="final")return makeFinal();
+  else if(a==="end"){S.over=true;if(!S.archId)archive();S.tab="rk"}
+  else if(a==="saveconf"){S.name=document.getElementById("tn").value.trim()||"Torneo Commander";S.total=Math.min(10,Math.max(1,+document.getElementById("tr").value||3));S.tab="pl"}
+  else if(a==="copy"){const t=S.name+"\n"+ranking().map((s,i)=>`${i+1}. ${s.name} – ${s.pts} pt (VIA ${pc(s.via)}, VP ${pc(s.vp)}, VPA ${pc(s.vpa)})`).join("\n");
+    try{navigator.clipboard.writeText(t).then(()=>alert("Classifica copiata."),()=>alert(t))}catch(x){alert(t)};return}
+  else if(a==="screset"){if(confirm("Ripristinare i punteggi standard?"))S.sc=JSON.parse(JSON.stringify(DSC))}
+  else if(a==="theme"){const r=document.documentElement,d=getComputedStyle(r).getPropertyValue("--bg").trim()==="#0f1c18";r.dataset.theme=d?"light":"dark";try{localStorage.setItem(KEY+"-th",r.dataset.theme)}catch(x){};return}
+  else if(a==="reset"){if(confirm("Iniziare un nuovo torneo? I dati del torneo attuale verranno cancellati dalla schermata.")){if(started()&&!S.archId&&confirm("Salvare prima il torneo attuale nello storico?"))archive();S=Object.assign(mkD(),{sc:S.sc,hist:S.hist})}}
+  else if(a==="hopen"){S.hv=id}
+  else if(a==="hback"){S.hv=null}
+  else if(a==="hdel"){if(confirm("Eliminare questo torneo dallo storico?")){S.hist=S.hist.filter(h=>h.id!==id);if(S.archId===id)S.archId=null;S.hv=null}}
+  else if(a==="hclr"){if(confirm("Eliminare tutta la cronologia dei tornei? L’operazione non si può annullare.")){S.hist=[];S.archId=null;S.hv=null}}
+  save();render();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="pn")document.querySelector('[data-a="add"]').click()});
+try{const t=localStorage.getItem(KEY+"-th");if(t)document.documentElement.dataset.theme=t}catch(e){}
+render();
+</script>
+<script>if("serviceWorker" in navigator&&!window.Capacitor&&location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
+</body>
+</html>
