@@ -193,13 +193,13 @@ function podCard(r,ri,pod,pi){
     }else if(md==="w"&&sq.includes(id)){c="win";tg=o[sq.indexOf(id)]}
     else if(md==="d"&&al.includes(id)){c="draw";tg="Vivo"}
     return `<button class="seat ${c}" data-a="seat" data-r="${ri}" data-p="${pi}" data-id="${id}"><span>${esc(nm(id))}</span><span class="tag">${tg}</span></button>`}).join("");
-  const hint=x?"Risultato registrato. Tocca un giocatore per annullarlo.":md==="w"?"Tocca i giocatori in ordine di classifica: 1°, 2°… (l’ultimo è automatico).":(pod.st===1?"Tocca chi è stato eliminato per primo.":"Tocca i giocatori ancora vivi a fine partita (2 o 3 in un tavolo da 4).");
+  const hint=x?"Risultato registrato. Tocca un giocatore per annullarlo.":md==="w"?"Tocca i giocatori in ordine di classifica: 1°, 2°… (l’ultimo è automatico).":(pod.st===1?"Tocca chi è stato eliminato per primo.":"Tocca i giocatori ancora vivi a fine partita, oppure usa “Pareggio totale”.");
   const ready=md==="d"&&!x&&al.length>=2&&pod.st!==1;
   const a=`data-r="${ri}" data-p="${pi}"`;
   return `<div class="card"><div class="row sp"><h3>${r.final?"Finale":"Tavolo "+(pi+1)}</h3><span class="tag">${z} giocatori${x?"":" · da registrare"}</span></div>
   <div class="chips" style="padding-bottom:8px"><button class="${md==="w"?"on":""}" data-a="mode" data-m="w" ${a}>Vittoria netta</button><button class="${md==="d"?"on":""}" data-a="mode" data-m="d" ${a}>Pareggio</button></div>
   ${seats}<div class="note" style="margin:2px 0 8px">${hint}</div>
-  <div class="row">${ready?`<button class="p sm" data-a="conf" ${a}>${z===4&&al.length===2?"Pareggio a 2: avanti":"Conferma pareggio"}</button>`:""}<button class="sm" data-a="clr" ${a}>Azzera</button></div></div>`;
+  <div class="row">${ready?`<button class="p sm" data-a="conf" ${a}>${z===4&&al.length===2?"Pareggio a 2: avanti":"Conferma pareggio"}</button>`:""}${md==="d"&&!x?`<button class="sm" data-a="dall" ${a}>Pareggio totale (${z} vivi)</button>`:""}<button class="sm" data-a="clr" ${a}>Azzera</button></div></div>`;
 }
 function vRound(){
   if(!started())return `<div class="card"><h3>Nessun turno in corso</h3><div class="note">Avvia il torneo dalla scheda Iscritti.</div></div>`;
@@ -251,11 +251,11 @@ function vHist(){
 }
 const SCF=[
  ["Tavolo da 4: vittoria netta",[["1° posto","w4.0"],["2° posto","w4.1"],["3° posto","w4.2"],["4° posto","w4.3"]]],
- ["Tavolo da 4: pareggio con 4 vivi",[["Ogni giocatore","d44"]]],
+ ["Tavolo da 4: pareggio totale (4 vivi)",[["Ogni giocatore","d44"]]],
  ["Tavolo da 4: pareggio con 3 vivi",[["Ogni vivo","d43a"],["Eliminato","d43o"]]],
  ["Tavolo da 4: pareggio con 2 vivi",[["Ogni vivo","d42a"],["Eliminato per ultimo","d42l"],["Eliminato per primo","d42f"]]],
  ["Tavolo da 3: vittoria netta",[["1° posto","w3.0"],["2° posto","w3.1"],["3° posto","w3.2"]]],
- ["Tavolo da 3: pareggio con 3 vivi",[["Ogni giocatore","d33"]]],
+ ["Tavolo da 3: pareggio totale (3 vivi)",[["Ogni giocatore","d33"]]],
  ["Tavolo da 3: pareggio con 2 vivi",[["Ogni vivo","d32a"],["Eliminato","d32o"]]]];
 const scv=k=>{const [a,i]=k.split(".");return i===undefined?S.sc[a]:S.sc[a][i]};
 function vScore(){
@@ -285,6 +285,7 @@ document.addEventListener("click",e=>{
       else{pod.st=0;pod.al=pod.al.includes(id)?pod.al.filter(i=>i!==id):[...pod.al,id]}}}
   else if(a==="mode"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];pod.m=b.dataset.m;pod.res=null;pod.seq=[];pod.al=[];pod.st=0}
   else if(a==="clr"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];pod.res=null;pod.seq=[];pod.al=[];pod.st=0}
+  else if(a==="dall"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];pod.al=pod.ids.slice();pod.st=0;pod.res={t:"d",alive:pod.ids.slice(),out:[]}}
   else if(a==="conf"){const pod=S.rounds[+b.dataset.r].pods[+b.dataset.p];if(pod.ids.length===4&&pod.al.length===2)pod.st=1;else pod.res={t:"d",alive:pod.al.slice(),out:pod.ids.filter(i=>!pod.al.includes(i))}}
   else if(a==="next")return nextRound();
   else if(a==="final")return makeFinal();
