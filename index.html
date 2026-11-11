@@ -67,6 +67,7 @@ label{font-size:14px;color:var(--mut);display:block;margin:0 0 4px}
 <nav id="nav"></nav>
 <script>
 const KEY="edh-tm-v2";
+const VER="2.6";
 const DSC={w4:[4,3,2,1],w3:[3,2,1],d44:1,d43a:1,d43o:0,d42a:3,d42l:2,d42f:1,d33:1,d32a:3,d32o:1};
 const mkD=()=>({name:"Torneo Commander",players:[],rounds:[],total:3,win:4,draw:1,loss:0,tab:"pl",view:0,seed:1,nid:1,custom:false,over:false,hist:[],hv:null,archId:null});
 let S=mkD();
@@ -124,7 +125,9 @@ function stats(){
   return st;
 }
 function ranking(){
-  return Object.values(stats()).sort((a,b)=>b.pts-a.pts||b.vp-a.vp||b.via-a.via||b.vpa-a.vpa||a.name.localeCompare(b.name));
+  /* Ordine: 1) punti, 2) %VP, 3) %VIA, 4) %VPA. Valori arrotondati per evitare errori di calcolo decimale */
+  const q=x=>Math.round((+x||0)*1e6);
+  return Object.values(stats()).sort((a,b)=>(q(b.pts)-q(a.pts))||(q(b.vp)-q(a.vp))||(q(b.via)-q(a.via))||(q(b.vpa)-q(a.vpa))||a.name.localeCompare(b.name));
 }
 /* Pairing svizzero: evitare i rematch ha priorità assoluta (penalità 10000) sul punteggio simile */
 let LR=0;
@@ -225,9 +228,9 @@ function vRound(){
 function vRank(){
   if(!started())return `<div class="card"><div class="note">La classifica compare dopo il primo turno.</div></div>`;
   const rk=ranking(),fin=S.rounds.find(x=>x.final&&x.pods[0].res&&x.pods[0].res.t==="w");
-  const champ=fin?`<div class="champ">Campione: ${esc(nm(fin.pods[0].res.order[0]))}</div>`:"";
+  const champ=fin?`<div class="champ">Vincitore della finale: ${esc(nm(fin.pods[0].res.order[0]))}</div>`:"";
   return `${champ}<div class="card"><table><tr><th>Pos</th><th>Nome</th><th>Pt</th><th>%VIA</th><th>%VP</th><th>%VPA</th></tr>${rk.map((s,i)=>`<tr class="${s.drop?"dr":""}"><td>${i+1}</td><td>${esc(s.name)}</td><td><b>${s.pts}</b></td><td>${pc(s.via)}</td><td>${pc(s.vp)}</td><td>${pc(s.vpa)}</td></tr>`).join("")}</table></div>
-  <div class="note">Ordine standard: punti, %VP (OMW), %VIA (GW), %VPA (OGW). Ritirati in grigio.</div>
+  <div class="note">Ordine: prima i punti, poi (a parità di punti) %VP, %VIA e %VPA. Ritirati in grigio.</div>
   <button style="width:100%;margin-top:10px" data-a="copy">Copia classifica</button>`;
 }
 function vConf(){
@@ -235,7 +238,7 @@ function vConf(){
   <div class="card"><h3>Turni</h3><label for="tr">Numero di turni (consigliati: ${sug(Math.max(S.players.length,3))})</label><input id="tr" type="number" min="1" max="10" value="${S.total}"><button class="p" style="width:100%;margin-top:10px" data-a="saveconf">Salva impostazioni</button></div>
    <div class="card"><h3>Punteggi</h3><div class="note">Tutti i punteggi si modificano nella scheda Punti.</div></div>
   <div class="card"><h3>Spareggi e pairing</h3><div class="note">%VIA = punti ottenuti / punti massimi disponibili. %VP = media %VIA degli avversari. %VPA = media %VP degli avversari. Entrambe con minimo 33% per avversario. Classifica: punti, %VP, %VIA, %VPA, come nei software di gestione tornei.<br>Turno 1 casuale. Dal turno 2 si accoppia per punti, ma non rincontrare avversari ha priorità assoluta. Tavoli da 4, con tavoli da 3 per il resto.</div></div>
-  <div class="row"><button style="flex:1" data-a="theme">Tema chiaro/scuro</button><button style="flex:1;color:#b3261e" data-a="reset">Nuovo torneo</button></div>`;
+  <div class="row"><button style="flex:1" data-a="theme">Tema chiaro/scuro</button><button style="flex:1;color:#b3261e" data-a="reset">Nuovo torneo</button></div><div class="note" style="margin-top:12px;text-align:center">Versione ${VER} · classifica ordinata per punti, poi %VP, %VIA, %VPA</div>`;
 }
 const wS=(e,f)=>{const b=[S.players,S.rounds,S.sc];S.players=e.players;S.rounds=e.rounds;S.sc=e.sc;try{return f()}finally{[S.players,S.rounds,S.sc]=b}};
 function topOf(e){return wS(e,()=>{const fin=S.rounds.find(x=>x.final&&x.pods[0].res&&x.pods[0].res.t==="w"),rk=ranking();return{c:fin?nm(fin.pods[0].res.order[0]):null,t:rk[0]?rk[0].name:"-"}})}
@@ -246,14 +249,14 @@ function hDetail(e){return wS(e,()=>{
       return `<div class="note" style="margin-bottom:6px"><b>${r.final?"Finale":"Tavolo "+(i+1)}</b>${p.res&&p.res.t==="d"?" (pareggio)":""}: ${(p.res&&p.res.t==="w"?p.res.order:p.ids).map(id=>esc(nm(id))+(p.res?" ("+m[id]+")":"")).join(", ")}</div>`}).join("")}</div>`}).join("");
   return `<button class="sm" data-a="hback" style="margin-bottom:10px">← Torna allo storico</button>
   <div class="card"><h3>${esc(e.name)}</h3><div class="note">${e.date} · ${e.players.length} giocatori${e.over?"":" · torneo non concluso"}</div></div>
-  ${t.c?`<div class="champ">Campione: ${esc(t.c)}</div>`:""}
+  ${t.c?`<div class="champ">Vincitore della finale: ${esc(t.c)}</div>`:""}
   <div class="card"><table><tr><th>Pos</th><th>Nome</th><th>Pt</th><th>%VIA</th><th>%VP</th><th>%VPA</th></tr>${rk.map((s,i)=>`<tr class="${s.drop?"dr":""}"><td>${i+1}</td><td>${esc(s.name)}</td><td><b>${s.pts}</b></td><td>${pc(s.via)}</td><td>${pc(s.vp)}</td><td>${pc(s.vpa)}</td></tr>`).join("")}</table></div>
   <h3 style="margin:14px 0 8px">Turni giocati</h3>${rds}`})}
 function vHist(){
   const e=S.hv&&S.hist.find(h=>h.id===S.hv);
   if(e)return hDetail(e);
   if(!S.hist.length)return `<div class="card"><h3>Storico tornei</h3><div class="note">Nessun torneo salvato. Un torneo viene salvato quando premi “Concludi torneo”, oppure quando ne avvii uno nuovo e scegli di salvare quello attuale.</div></div>`;
-  return S.hist.map(h=>{const t=topOf(h);return `<div class="card"><div class="row sp"><h3>${esc(h.name)}</h3><span class="tag">${h.date}</span></div><div class="note">${h.players.length} giocatori · ${h.rounds.filter(r=>!r.final).length} turni · ${t.c?"Campione":"1° in classifica"}: <b>${esc(t.c||t.t)}</b>${h.over?"":" · non concluso"}</div><div class="row" style="margin-top:8px"><button class="p sm" data-a="hopen" data-id="${h.id}">Apri</button><button class="sm" data-a="hdel" data-id="${h.id}">Elimina</button></div></div>`}).join("")+`<button style="width:100%;color:#b3261e" data-a="hclr">Elimina tutta la cronologia</button>`;
+  return S.hist.map(h=>{const t=topOf(h);return `<div class="card"><div class="row sp"><h3>${esc(h.name)}</h3><span class="tag">${h.date}</span></div><div class="note">${h.players.length} giocatori · ${h.rounds.filter(r=>!r.final).length} turni · ${t.c?"Vincitore finale":"1° in classifica"}: <b>${esc(t.c||t.t)}</b>${h.over?"":" · non concluso"}</div><div class="row" style="margin-top:8px"><button class="p sm" data-a="hopen" data-id="${h.id}">Apri</button><button class="sm" data-a="hdel" data-id="${h.id}">Elimina</button></div></div>`}).join("")+`<button style="width:100%;color:#b3261e" data-a="hclr">Elimina tutta la cronologia</button>`;
 }
 const SCF=[
  ["Tavolo da 4: vittoria netta",[["1° posto","w4.0"],["2° posto","w4.1"],["3° posto","w4.2"],["4° posto","w4.3"]]],
